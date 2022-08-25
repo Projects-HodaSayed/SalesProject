@@ -56,14 +56,14 @@ public class SalesInvoiceForm extends JFrame implements ActionListener {
     private JButton cancelbtn;
     private ArrayList<InvoiceHeader> invoiceHeaderList ;
     private ArrayList<InvoiceLine> invoiceHeaderLineList ;
+    private boolean newInvoice;
 
 
     public SalesInvoiceForm()
     {
 
         initComponents();
-
-        String pathheader = "/Users/hodasayed/Downloads/Sales Invoice Generator/InvoiceHeader.csv";
+        String pathheader = "out/InvoiceHeader.csv";
 
         //Create tabel from file.CSV
         createInvoiceTables(pathheader);
@@ -172,21 +172,23 @@ public class SalesInvoiceForm extends JFrame implements ActionListener {
 
                                             String[][] invoicelinesData = new String[invoiceHeaderLineList.size()][5];
                                             int mm = Integer.parseInt(invoiceNotxt.getText());
-
+                                            int z = 0;
                                             for (int y = 0; y < invoiceHeaderLineList.size(); y++) {
 
                                                 InvoiceLine invoiceLineobj = new InvoiceLine("", "", "", "", "");
                                                 invoiceLineobj = invoiceHeaderLineList.get(y);
 
                                                 int cc = Integer.parseInt(invoiceLineobj.getInvoiceNumber());
-                                                if (mm == cc) {
+                                                if (mm == cc)
+                                                {
                                                     int totalPrice = Integer.parseInt(invoiceLineobj.getPrice()) * Integer.parseInt(invoiceLineobj.getCount());
                                                     invoiceLineobj.settotal(String.valueOf(totalPrice));
-                                                    invoicelinesData[y][0] = String.valueOf(invoiceLineobj.getInvoiceNumber());
-                                                    invoicelinesData[y][1] = String.valueOf(invoiceLineobj.getItemName());
-                                                    invoicelinesData[y][2] = String.valueOf(invoiceLineobj.getPrice());
-                                                    invoicelinesData[y][3] = String.valueOf(invoiceLineobj.getCount());
-                                                    invoicelinesData[y][4] = String.valueOf(invoiceLineobj.gettotal());
+                                                    invoicelinesData[z][0] = String.valueOf(invoiceLineobj.getInvoiceNumber());
+                                                    invoicelinesData[z][1] = String.valueOf(invoiceLineobj.getItemName());
+                                                    invoicelinesData[z][2] = String.valueOf(invoiceLineobj.getPrice());
+                                                    invoicelinesData[z][3] = String.valueOf(invoiceLineobj.getCount());
+                                                    invoicelinesData[z][4] = String.valueOf(invoiceLineobj.gettotal());
+                                                    z++;
                                                 }
                                             }
 
@@ -474,6 +476,7 @@ public class SalesInvoiceForm extends JFrame implements ActionListener {
                 break;
             case "Create":
                 clearRightPanel();
+                newInvoice = true;
                 createnewInvoicenumber();
                 break;
             case "Delete":
@@ -620,41 +623,42 @@ public class SalesInvoiceForm extends JFrame implements ActionListener {
                 String datatoreadHeader = "";
                 int invoiceNumeber = 0;
 
-                for(int i = 0 ; i < invoiceHeaderList.size(); i++)
+                //Add Invoice Header
+                if(newInvoice)
                 {
-                    InvoiceHeader invoiceHeaderobj = new InvoiceHeader("", "", "", "");
-                    invoiceHeaderobj = invoiceHeaderList.get(i);
-                    if( invoiceNotxt.getText() != "" && invoiceNumeber ==Integer.parseInt(invoiceHeaderobj.getInvoiceNumber()) )
+                    for(int i = 0 ; i < invoiceHeaderList.size(); i++)
                     {
-                        datatoreadHeader += invoiceNotxt.getText() + "," + invoicedatetxt.getText() + "," + customernametxt.getText()+"\r\n";
-                    }
-                    else {
+                        InvoiceHeader invoiceHeaderobj = new InvoiceHeader("", "", "", "");
+                        invoiceHeaderobj = invoiceHeaderList.get(i);
                         datatoreadHeader += String.valueOf(invoiceHeaderobj.getInvoiceNumber()) + "," +
-                                String.valueOf(invoiceHeaderobj.getInvoiceDate()) + "," +
-                                String.valueOf(invoiceHeaderobj.getCustomerName()) +
-                                "\r\n";
+                                    String.valueOf(invoiceHeaderobj.getInvoiceDate()) + "," +
+                                    String.valueOf(invoiceHeaderobj.getCustomerName()) +
+                                    "\r\n";
+                    }
+                    InvoiceHeader newinvoiceHeaderobj = new InvoiceHeader(invoiceNotxt.getText(), invoicedatetxt.getText() , customernametxt.getText(),"");
+                    invoiceHeaderList.add(newinvoiceHeaderobj);
+                    datatoreadHeader += invoiceNotxt.getText() + "," + invoicedatetxt.getText() + "," + customernametxt.getText()+"\r\n";
+                }
+                else {
+                    for (int i = 0; i < invoiceHeaderList.size(); i++) {
+                        InvoiceHeader invoiceHeaderobj = new InvoiceHeader("", "", "", "");
+                        invoiceHeaderobj = invoiceHeaderList.get(i);
+                        if (invoiceNotxt.getText() != "" && invoiceNumeber == Integer.parseInt(invoiceHeaderobj.getInvoiceNumber())) {
+                            datatoreadHeader += invoiceNotxt.getText() + "," + invoicedatetxt.getText() + "," + customernametxt.getText() + "\r\n";
+                        } else {
+                            datatoreadHeader += String.valueOf(invoiceHeaderobj.getInvoiceNumber()) + "," +
+                                    String.valueOf(invoiceHeaderobj.getInvoiceDate()) + "," +
+                                    String.valueOf(invoiceHeaderobj.getCustomerName()) +
+                                    "\r\n";
+                        }
                     }
                 }
-                /*for(int i = 0;i<invoiceHeaderJTable.getRowCount();i++)
-                {
-                    invoiceNumeber= Integer.parseInt((String)invoiceHeaderJTable.getModel().getValueAt(i, 0));
-                    if( invoiceNotxt.getText() != "" && invoiceNumeber ==Integer.parseInt(invoiceNotxt.getText()) )
-                    {
-                        datatoreadHeader += invoiceNotxt.getText() + "," + invoicedatetxt.getText() + "," + customernametxt.getText()+"\r\n";
-                    }
-                    else {
-                        datatoreadHeader +=
-                                (String) invoiceHeaderJTable.getModel().getValueAt(i, 0) + "," +
-                                        (String) invoiceHeaderJTable.getModel().getValueAt(i, 1) + "," +
-                                        (String) invoiceHeaderJTable.getModel().getValueAt(i, 2) +
-                                        "\r\n";
-                    }
 
-                }*/
                 bufferwriter.write(datatoreadHeader);
                 bufferwriter.close();
 
-                //--------
+                //--------Add Invoice Lines
+
                 int invoiceNumeberLine = 0;
                 String datatoWriteLines = "";
                 for(int i = 0;i<invoiceLinesJTable.getRowCount();i++)
@@ -669,7 +673,6 @@ public class SalesInvoiceForm extends JFrame implements ActionListener {
                                         (String) invoiceLinesJTable.getModel().getValueAt(i, 2) + "," +
                                         (String) invoiceLinesJTable.getModel().getValueAt(i, 3) +
                                         "\r\n";
-
                     }
                 }
                         for (int y = 0; y < invoiceHeaderLineList.size(); y++)
@@ -686,7 +689,6 @@ public class SalesInvoiceForm extends JFrame implements ActionListener {
                                 "\r\n";
                             }
                         }
-
 
                 bufferwriterlines.write(datatoWriteLines);
                 bufferwriterlines.close();
