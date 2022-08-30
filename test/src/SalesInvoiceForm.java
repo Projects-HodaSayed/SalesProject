@@ -61,9 +61,8 @@ public class SalesInvoiceForm extends JFrame implements ActionListener {
 
     public SalesInvoiceForm()
     {
-
         initComponents();
-        String pathheader = "out/InvoiceHeader.csv";
+        String pathheader = "src/InvoiceHeader.csv";
 
         //Create tabel from file.CSV
         createInvoiceTables(pathheader);
