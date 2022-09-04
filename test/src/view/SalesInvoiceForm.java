@@ -59,14 +59,14 @@ public class SalesInvoiceForm extends JFrame implements ActionListener {
     private ArrayList<InvoiceLine> invoiceHeaderLineList ;
     private boolean newInvoice;
 
-
     public SalesInvoiceForm()
     {
         initComponents();
         String pathheader = "InvoiceHeader.csv";
+        String pathline = "InvoiceLine.csv";
 
         //Create tabel from file.CSV
-        createInvoiceTables(pathheader);
+        createInvoiceTables(pathheader,pathline);
 
         this.setSize(1400, 1000);
         this.setVisible(true);
@@ -360,7 +360,7 @@ public class SalesInvoiceForm extends JFrame implements ActionListener {
                         panel6.add(savebtn);
 
                         //---- cancelbtn ----
-                        cancelbtn.setText("Cancel");
+                        cancelbtn.setText("Delete Invoice Line");
                         cancelbtn.setActionCommand("Cancel");
                         cancelbtn.addActionListener(this);
                         panel6.add(cancelbtn);
@@ -377,7 +377,7 @@ public class SalesInvoiceForm extends JFrame implements ActionListener {
         // JFormDesigner - End of component initialization  //GEN-END:initComponents
     }
 
-    private void createInvoiceTables(String pathheader)
+    private void createInvoiceTables(String pathheader, String pathlines)
     {
         BufferedReader bufReader = null;
         invoiceHeaderList = new ArrayList<InvoiceHeader>();
@@ -414,9 +414,9 @@ public class SalesInvoiceForm extends JFrame implements ActionListener {
         //Invoice Lines File
         try {
             //String pathline2 = "/Users/hodasayed/Downloads/Sales Invoice Generator/InvoiceLine.csv";
-            String pathline2 = pathheader.replaceFirst("InvoiceHeader","InvoiceLine") ;
+            //String pathline2 = pathheader.replaceFirst("InvoiceHeader","InvoiceLine") ;
 
-            File file = new File(pathline2);
+            File file = new File(pathlines);
             FileReader interpleader = new FileReader(file);
             bufReader = new BufferedReader(interpleader);
 
@@ -439,6 +439,29 @@ public class SalesInvoiceForm extends JFrame implements ActionListener {
             } catch (IOException e) {
             }
         }
+
+        //print data in console
+        for(int i = 0 ; i < invoiceHeaderList.size(); i++) {
+            InvoiceHeader invoiceHeaderobj = new InvoiceHeader("", "", "", "");
+            invoiceHeaderobj = invoiceHeaderList.get(i);
+
+            System.out.println("Invoice" + String.valueOf(invoiceHeaderobj.getInvoiceNumber()) + "num");
+            System.out.println("{");
+            System.out.println("InvoiceDate(" + String.valueOf(invoiceHeaderobj.getInvoiceDate()) + ")," + String.valueOf(invoiceHeaderobj.getCustomerName()));
+
+            for (int y = 0; y < invoiceHeaderLineList.size(); y++) {
+                InvoiceLine invoiceLineobj = new InvoiceLine("", "", "", "", "");
+                invoiceLineobj = invoiceHeaderLineList.get(y);
+                int mm = Integer.parseInt(invoiceHeaderobj.getInvoiceNumber());
+                int cc = Integer.parseInt(invoiceLineobj.getInvoiceNumber());
+                if(mm == cc) {
+                    System.out.println(String.valueOf(invoiceLineobj.getItemName()) + "," + String.valueOf(invoiceLineobj.getPrice()) +
+                            "," + String.valueOf(invoiceLineobj.getCount()));
+                }
+            }
+            System.out.println("}");
+        }
+        //
 
         String[][] headerData = new String[invoiceHeaderList.size()][4];
 
@@ -494,7 +517,7 @@ public class SalesInvoiceForm extends JFrame implements ActionListener {
                 saveFile();
                 break;
             case "Cancel":
-                this.dispose();
+                DeleteInvoiceLine();
                 break;
         }
     }
@@ -622,17 +645,75 @@ public class SalesInvoiceForm extends JFrame implements ActionListener {
         }
         clearRightPanel();
     }
+    private void DeleteInvoiceLine()
+    {
+        int[] row = invoiceLinesJTable.getSelectedRows();
+        if(row != null )
+        {
+            String selectedinvoiceNumber = "";
+            selectedinvoiceNumber = (String) invoiceLinesJTable.getValueAt(row[0], 0);
 
+            String selectedinvoiceItemName = "";
+            selectedinvoiceItemName = (String) invoiceLinesJTable.getValueAt(row[0], 1);
+
+            String selectedinvoiceItemPrice = "";
+            selectedinvoiceItemPrice = (String) invoiceLinesJTable.getValueAt(row[0], 2);
+
+            String[][] invoicelinesData = new String[invoiceHeaderLineList.size()][5];
+
+            int mm = Integer.parseInt(selectedinvoiceNumber);
+            int price = Integer.parseInt(selectedinvoiceItemPrice);
+
+            for (int y = 0; y < invoiceHeaderLineList.size(); y++)
+            {
+                InvoiceLine invoiceLineobj = new InvoiceLine("", "", "", "", "");
+                invoiceLineobj = invoiceHeaderLineList.get(y);
+                int cc = Integer.parseInt(invoiceLineobj.getInvoiceNumber());
+                int currentprice = Integer.parseInt(invoiceLineobj.getPrice());
+                String currentItemName = (String) invoiceLineobj.getItemName();
+
+                if (mm == cc && price == currentprice && selectedinvoiceItemName == currentItemName) {
+                    invoiceHeaderLineList.remove(y);
+                    break;
+                }
+            }
+            for (int y = 0; y < invoiceHeaderLineList.size(); y++)
+            {
+                InvoiceLine invoiceLineobj = new InvoiceLine("", "", "", "", "");
+                invoiceLineobj = invoiceHeaderLineList.get(y);
+
+                int cc = Integer.parseInt(invoiceLineobj.getInvoiceNumber());
+                if(mm == cc) {
+                    invoicelinesData[y][0] = String.valueOf(invoiceLineobj.getInvoiceNumber());
+                    invoicelinesData[y][1] = String.valueOf(invoiceLineobj.getItemName());
+                    invoicelinesData[y][2] = String.valueOf(invoiceLineobj.getPrice());
+                    invoicelinesData[y][3] = String.valueOf(invoiceLineobj.getCount());
+                    invoicelinesData[y][4] = String.valueOf(invoiceLineobj.gettotal());
+                }
+            }
+
+            invoiceLinesJTable.setModel(
+                    new DefaultTableModel(invoicelinesData,
+                            new String[]{
+                                    "No.", "Item Name", "Item Price", "Count", "Item Total"
+                            }
+                    ));
+        }
+    }
     private  void loadFile()
     {
         JFileChooser fc = new JFileChooser();
         int result = fc.showOpenDialog(this);
         BufferedReader bufReader = null;
 
-        if (result == JFileChooser.APPROVE_OPTION)
+        JFileChooser fc2 = new JFileChooser();
+        int result2 = fc2.showOpenDialog(this);
+
+        if (result == JFileChooser.APPROVE_OPTION && result2 == JFileChooser.APPROVE_OPTION)
         {
                 String path = fc.getSelectedFile().getPath();
-                createInvoiceTables(path);
+                String path2 = fc2.getSelectedFile().getPath();
+                createInvoiceTables(path , path2);
                 clearRightPanel();
         }
 
@@ -644,12 +725,15 @@ public class SalesInvoiceForm extends JFrame implements ActionListener {
         BufferedWriter bufferwriter = null;
         BufferedWriter bufferwriterlines = null;
 
-        if (result == JFileChooser.APPROVE_OPTION)
+        JFileChooser fc2 = new JFileChooser();
+        int result2 = fc2.showOpenDialog(this);
+
+        if (result == JFileChooser.APPROVE_OPTION && result2 == JFileChooser.APPROVE_OPTION )
         {
             try {
 
                 String path = fc.getSelectedFile().getPath();
-                String pathLines = path.replace("InvoiceHeader","InvoiceLine");
+                String pathLines = fc2.getSelectedFile().getPath();
 
                 FileWriter writer = new FileWriter(path);
                 FileWriter writer2 = new FileWriter(pathLines);
