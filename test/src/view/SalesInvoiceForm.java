@@ -407,7 +407,9 @@ public class SalesInvoiceForm extends JFrame implements ActionListener {
             e.printStackTrace();
         } finally {
             try {
-                bufReader.close();
+                if(bufReader != null) {
+                    bufReader.close();
+                }
             } catch (IOException e) {
             }
         }
@@ -435,7 +437,9 @@ public class SalesInvoiceForm extends JFrame implements ActionListener {
             e.printStackTrace();
         } finally {
             try {
-                bufReader.close();
+                if(bufReader != null) {
+                    bufReader.close();
+                }
             } catch (IOException e) {
             }
         }
@@ -716,7 +720,6 @@ public class SalesInvoiceForm extends JFrame implements ActionListener {
                 createInvoiceTables(path , path2);
                 clearRightPanel();
         }
-
     }
     private  void saveFile()
     {
@@ -731,7 +734,6 @@ public class SalesInvoiceForm extends JFrame implements ActionListener {
         if (result == JFileChooser.APPROVE_OPTION && result2 == JFileChooser.APPROVE_OPTION )
         {
             try {
-
                 String path = fc.getSelectedFile().getPath();
                 String pathLines = fc2.getSelectedFile().getPath();
 
