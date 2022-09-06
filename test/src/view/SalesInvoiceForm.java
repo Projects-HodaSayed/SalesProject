@@ -2,6 +2,7 @@ package view;
 
 import model.InvoiceHeader;
 import model.InvoiceLine;
+import view.NewLineForm;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
@@ -353,7 +354,7 @@ public class SalesInvoiceForm extends JFrame implements ActionListener {
                         panel6.setLayout(new GridLayout(1, 2));
 
                         //---- savebtn ----
-                        savebtn.setText("Save");
+                        savebtn.setText("New Invoice Line");
                         savebtn.setActionCommand("Save");
                         savebtn.addActionListener(this);
                         savebtn.setPreferredSize(new Dimension(78, 10));
@@ -466,37 +467,7 @@ public class SalesInvoiceForm extends JFrame implements ActionListener {
             System.out.println("}");
         }
         //
-
-        String[][] headerData = new String[invoiceHeaderList.size()][4];
-
-        for(int i = 0 ; i < invoiceHeaderList.size(); i++)
-        {
-            InvoiceHeader invoiceHeaderobj = new InvoiceHeader("","","","");
-            invoiceHeaderobj = invoiceHeaderList.get(i);
-            int totalPrice = 0;
-            for(int y = 0 ; y < invoiceHeaderLineList.size();y++)
-            {
-                InvoiceLine invoiceLineobj = new InvoiceLine("","","","","");
-                invoiceLineobj = invoiceHeaderLineList.get(y);
-                int mm = Integer.parseInt(invoiceHeaderobj.getInvoiceNumber());
-                int cc = Integer.parseInt(invoiceLineobj.getInvoiceNumber());
-                if(mm == cc)
-                {
-                totalPrice += Integer.parseInt(invoiceLineobj.getPrice()) * Integer.parseInt(invoiceLineobj.getCount());
-                }
-            }
-            invoiceHeaderobj.settotal(String.valueOf(totalPrice));
-            headerData [i][0] = String.valueOf(invoiceHeaderobj.getInvoiceNumber());
-            headerData [i][1] = String.valueOf(invoiceHeaderobj.getInvoiceDate());
-            headerData [i][2] = String.valueOf(invoiceHeaderobj.getCustomerName());
-            headerData [i][3] = String.valueOf(invoiceHeaderobj.gettotal());
-        }
-        invoiceHeaderJTable.setModel(
-                new DefaultTableModel(headerData,
-                new String[] {
-                        "No.", "Date", "Customer", "Total"
-                }
-        ));
+        updateHeaderTableTotal();
     }
 
     public void actionPerformed(ActionEvent e)
@@ -512,13 +483,22 @@ public class SalesInvoiceForm extends JFrame implements ActionListener {
             case "Create":
                 clearRightPanel();
                 newInvoice = true;
-                createnewInvoicenumber();
+                int newinvoicenumber = createnewInvoicenumber();
+                NewHeaderForm newHeaderForm = new NewHeaderForm(this,String.valueOf(newinvoicenumber));
+                //createnewInvoicenumber();
                 break;
             case "Delete":
                 DeleteInvoice();
                 break;
             case "Save":
-                saveFile();
+                int[] row = invoiceHeaderJTable.getSelectedRows();
+                if(row != null )
+                {
+                    String selectedinvoiceNumber = "";
+                    selectedinvoiceNumber = (String)invoiceHeaderJTable.getValueAt(row[0], 0);
+                    NewLineForm newLineForm = new NewLineForm(this,invoiceNotxt.getText());
+                }
+                //saveFile();
                 break;
             case "Cancel":
                 DeleteInvoiceLine();
@@ -526,7 +506,7 @@ public class SalesInvoiceForm extends JFrame implements ActionListener {
         }
     }
 
-    private void createnewInvoicenumber()
+    private int createnewInvoicenumber()
     {
         int max = 0;
         int invoicenumber = 0;
@@ -544,8 +524,8 @@ public class SalesInvoiceForm extends JFrame implements ActionListener {
             }
         }
         invoiceNotxt.setText(String.valueOf(max+1) );
+        return max+1;
     }
-
     private void deletedata()
     {
         invoicetotaltxt.setText("");
@@ -624,7 +604,8 @@ public class SalesInvoiceForm extends JFrame implements ActionListener {
                 int cc = Integer.parseInt(invoiceLineobj.getInvoiceNumber());
                 if (mm == cc) {
                     invoiceHeaderLineList.remove(y);
-                    break;
+                    y--;
+                    //break;
                 }
             }
             for (int y = 0; y < invoiceHeaderLineList.size(); y++)
@@ -721,6 +702,39 @@ public class SalesInvoiceForm extends JFrame implements ActionListener {
                 clearRightPanel();
         }
     }
+    private void updateHeaderTableTotal()
+    {
+        String[][] headerData = new String[invoiceHeaderList.size()][4];
+
+        for(int i = 0 ; i < invoiceHeaderList.size(); i++)
+        {
+            InvoiceHeader invoiceHeaderobj = new InvoiceHeader("","","","");
+            invoiceHeaderobj = invoiceHeaderList.get(i);
+            int totalPrice = 0;
+            for(int y = 0 ; y < invoiceHeaderLineList.size();y++)
+            {
+                InvoiceLine invoiceLineobj = new InvoiceLine("","","","","");
+                invoiceLineobj = invoiceHeaderLineList.get(y);
+                int mm = Integer.parseInt(invoiceHeaderobj.getInvoiceNumber());
+                int cc = Integer.parseInt(invoiceLineobj.getInvoiceNumber());
+                if(mm == cc)
+                {
+                    totalPrice += Integer.parseInt(invoiceLineobj.getPrice()) * Integer.parseInt(invoiceLineobj.getCount());
+                }
+            }
+            invoiceHeaderobj.settotal(String.valueOf(totalPrice));
+            headerData [i][0] = String.valueOf(invoiceHeaderobj.getInvoiceNumber());
+            headerData [i][1] = String.valueOf(invoiceHeaderobj.getInvoiceDate());
+            headerData [i][2] = String.valueOf(invoiceHeaderobj.getCustomerName());
+            headerData [i][3] = String.valueOf(invoiceHeaderobj.gettotal());
+        }
+        invoiceHeaderJTable.setModel(
+                new DefaultTableModel(headerData,
+                        new String[] {
+                                "No.", "Date", "Customer", "Total"
+                        }
+                ));
+    }
     private  void saveFile()
     {
         JFileChooser fc = new JFileChooser();
@@ -747,7 +761,7 @@ public class SalesInvoiceForm extends JFrame implements ActionListener {
                 int invoiceNumeber = 0;
 
                 //Add Invoice Header
-                if(newInvoice)
+              /*  if(newInvoice)
                 {
                     for(int i = 0 ; i < invoiceHeaderList.size(); i++)
                     {
@@ -762,20 +776,17 @@ public class SalesInvoiceForm extends JFrame implements ActionListener {
                     invoiceHeaderList.add(newinvoiceHeaderobj);
                     datatoreadHeader += invoiceNotxt.getText() + "," + invoicedatetxt.getText() + "," + customernametxt.getText()+"\r\n";
                 }
-                else {
-                    for (int i = 0; i < invoiceHeaderList.size(); i++) {
+                else {*/
+                for (int i = 0; i < invoiceHeaderList.size(); i++) {
                         InvoiceHeader invoiceHeaderobj = new InvoiceHeader("", "", "", "");
                         invoiceHeaderobj = invoiceHeaderList.get(i);
-                        if (invoiceNotxt.getText() != "" && invoiceNumeber == Integer.parseInt(invoiceHeaderobj.getInvoiceNumber())) {
-                            datatoreadHeader += invoiceNotxt.getText() + "," + invoicedatetxt.getText() + "," + customernametxt.getText() + "\r\n";
-                        } else {
-                            datatoreadHeader += String.valueOf(invoiceHeaderobj.getInvoiceNumber()) + "," +
+
+                        datatoreadHeader += String.valueOf(invoiceHeaderobj.getInvoiceNumber()) + "," +
                                     String.valueOf(invoiceHeaderobj.getInvoiceDate()) + "," +
                                     String.valueOf(invoiceHeaderobj.getCustomerName()) +
                                     "\r\n";
-                        }
                     }
-                }
+                    //}
 
                 bufferwriter.write(datatoreadHeader);
                 bufferwriter.close();
@@ -851,5 +862,72 @@ public class SalesInvoiceForm extends JFrame implements ActionListener {
                 }
         ) );
 
+    }
+    public void updateInvoiceLineTable(InvoiceLine newLine)
+    {
+        invoiceHeaderLineList.add(newLine);
+
+        String[][] invoicelinesData = new String[invoiceHeaderLineList.size()][5];
+        int mm = 0;
+        try{
+            mm = Integer.parseInt(invoiceNotxt.getText());
+        }
+        catch (Exception e) {
+            mm = 0;
+        }
+
+        int z = 0;
+        for (int y = 0; y < invoiceHeaderLineList.size(); y++) {
+
+            InvoiceLine invoiceLineobj = new InvoiceLine("", "", "", "", "");
+            invoiceLineobj = invoiceHeaderLineList.get(y);
+
+            int cc = Integer.parseInt(invoiceLineobj.getInvoiceNumber());
+            if (mm == cc)
+            {
+                int totalPrice = Integer.parseInt(invoiceLineobj.getPrice()) * Integer.parseInt(invoiceLineobj.getCount());
+                invoiceLineobj.settotal(String.valueOf(totalPrice));
+                invoicelinesData[z][0] = String.valueOf(invoiceLineobj.getInvoiceNumber());
+                invoicelinesData[z][1] = String.valueOf(invoiceLineobj.getItemName());
+                invoicelinesData[z][2] = String.valueOf(invoiceLineobj.getPrice());
+                invoicelinesData[z][3] = String.valueOf(invoiceLineobj.getCount());
+                invoicelinesData[z][4] = String.valueOf(invoiceLineobj.gettotal());
+                z++;
+            }
+        }
+
+        invoiceLinesJTable.setModel(
+                new DefaultTableModel(invoicelinesData,
+                        new String[]{
+                                "No.", "Item Name", "Item Price", "Count", "Item Total"
+                        }
+                ));
+
+        updateHeaderTableTotal();
+    }
+    public void updateInvoiceHeaderTable(InvoiceHeader newInvoiceHeader)
+    {
+        invoiceHeaderList.add(newInvoiceHeader);
+
+        String[][] invoiceHeaderData = new String[invoiceHeaderList.size()][4];
+
+        for (int y = 0; y < invoiceHeaderList.size(); y++) {
+
+            InvoiceHeader invoiceheaderobj = new InvoiceHeader("", "", "", "");
+            invoiceheaderobj = invoiceHeaderList.get(y);
+
+            invoiceHeaderData[y][0] = String.valueOf(invoiceheaderobj.getInvoiceNumber());
+            invoiceHeaderData[y][1] = String.valueOf(invoiceheaderobj.getInvoiceDate());
+            invoiceHeaderData[y][2] = String.valueOf(invoiceheaderobj.getCustomerName());
+            invoiceHeaderData[y][3] = String.valueOf(invoiceheaderobj.gettotal());
+
+        }
+
+        invoiceHeaderJTable.setModel(
+                new DefaultTableModel(invoiceHeaderData,
+                        new String[]{
+                                "No.", "Date", "Customer", "Total"
+                        }
+                ));
     }
 }
